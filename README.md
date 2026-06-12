@@ -10,8 +10,8 @@ designed to run alongside a C# application via a threaded pipeline.
 ## Overview
 
 There are two variations:
-- **Threaded version** — communicates with a C# program via an inter-process pipeline
-- **Standalone version** — a simple Python script that runs independently
+- **Threaded version**, communicates with a C# program via an inter-process pipeline
+- **Standalone version**, a simple Python script that runs independently
 
 > **Recommendation:** Use CUDA if possible. CPU inference works but is significantly slower.
 
@@ -22,11 +22,11 @@ If you find any improvements, feel free to open an issue or a PR.
 
 ## Tech Stack
 
-- **Python** — audio capture and transcription
-- **Whisper (OpenAI)** — offline speech recognition model
-- **CUDA / PyTorch** — GPU acceleration
-- **C#** — command-matching pipeline (separate process)
-- **Levenshtein distance** — fuzzy string matching
+- **Python**: audio capture and transcription
+- **Whisper (OpenAI)**: offline speech recognition model
+- **CUDA / PyTorch**: GPU acceleration
+- **C#**: command-matching pipeline (separate process)
+- **Levenshtein distance**: fuzzy string matching
 
 ---
 
