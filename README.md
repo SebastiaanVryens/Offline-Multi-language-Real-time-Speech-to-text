@@ -56,44 +56,43 @@ Punctuation is stripped before comparison, and substring containment is checked 
 ```csharp
 private static int LevenshteinDistance(string s, string t)
 {
-    int[,] d = new int[s.Length + 1, t.Length + 1];
-    for (int i = 0; i <= s.Length; i++) d[i, 0] = i;
-    for (int j = 0; j <= t.Length; j++) d[0, j] = j;
+    if (string.IsNullOrEmpty(s)) return t?.Length ?? 0;
+    if (string.IsNullOrEmpty(t)) return s.Length;
+
+    int[] prev = new int[t.Length + 1];
+    int[] curr = new int[t.Length + 1];
+    
+    for (int j = 0; j <= t.Length; j++) prev[j] = j;
 
     for (int i = 1; i <= s.Length; i++)
     {
+        curr[0] = i;
         for (int j = 1; j <= t.Length; j++)
         {
             int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
-            d[i, j] = Math.Min(
-                Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                d[i - 1, j - 1] + cost);
+            curr[j] = Math.Min(
+                Math.Min(curr[j - 1] + 1, prev[j] + 1), 
+                prev[j - 1] + cost);
         }
+        Array.Copy(curr, prev, curr.Length);
     }
-    return d[s.Length, t.Length];
+    return prev[t.Length];
 }
 
-private static double SimilarityPercentage(string s, string t)
+private static bool IsAtLeastXPercentSimilar(string s, string t, double threshold = 50.0)
 {
+    if (string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(t)) return false;
+
+    // Symmetrically trim punctuation to ensure a fair comparison
+    s = s.TrimEnd('.', '!', '?').Trim();
+    t = t.TrimEnd('.', '!', '?').Trim();
+    
+    if (s == t) return true;
+
     int distance = LevenshteinDistance(s, t);
     int maxLength = Math.Max(s.Length, t.Length);
-    return (1.0 - (double)distance / maxLength) * 100;
-}
-
-private static bool IsAtLeastXPercentSimilar(string s, string t, float threshold = 50.0f)
-{
-    if (s.Length > 0)
-    {
-        char lastChar = s[s.Length - 1];
-        if (lastChar == '.' || lastChar == '!' || lastChar == '?')
-            s = s.Substring(0, s.Length - 1);
-
-        if (s.Contains(t) || t.Contains(s))
-            return true;
-
-        return SimilarityPercentage(s, t) >= threshold;
-    }
-    return false;
+    
+    return ((1.0 - ((double)distance / maxLength)) * 100.0) >= threshold;
 }
 ```
 
