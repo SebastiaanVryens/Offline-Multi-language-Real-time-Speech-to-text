@@ -59,18 +59,14 @@ private static int LevenshteinDistance(string source, string target)
     if (string.IsNullOrEmpty(source)) return target?.Length ?? 0;
     if (string.IsNullOrEmpty(target)) return source.Length;
 
-    // Only two rows of the distance table are needed at a time:
-    // the row for the previous source character and the row being filled in.
     int[] previousRow = new int[target.Length + 1];
     int[] currentRow = new int[target.Length + 1];
 
-    // Turning an empty string into the first N target characters takes N insertions
     for (int targetIndex = 0; targetIndex <= target.Length; targetIndex++)
         previousRow[targetIndex] = targetIndex;
 
     for (int sourceIndex = 1; sourceIndex <= source.Length; sourceIndex++)
     {
-        // Turning the first N source characters into an empty string takes N deletions
         currentRow[0] = sourceIndex;
 
         for (int targetIndex = 1; targetIndex <= target.Length; targetIndex++)
@@ -114,7 +110,6 @@ private static bool IsAtLeastXPercentSimilar(string source, string target, doubl
 
 - Python 3.x
 - A CUDA-capable GPU *(strongly recommended)*
-- Dependencies: see `requirements.txt`
 
 ---
 
