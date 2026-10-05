@@ -54,45 +54,57 @@ A similarity threshold (default: 50%) determines whether a transcribed string co
 Punctuation is stripped before comparison, and substring containment is checked first as a fast path.
 
 ```csharp
-private static int LevenshteinDistance(string s, string t)
+private static int LevenshteinDistance(string source, string target)
 {
-    if (string.IsNullOrEmpty(s)) return t?.Length ?? 0;
-    if (string.IsNullOrEmpty(t)) return s.Length;
+    if (string.IsNullOrEmpty(source)) return target?.Length ?? 0;
+    if (string.IsNullOrEmpty(target)) return source.Length;
 
-    int[] prev = new int[t.Length + 1];
-    int[] curr = new int[t.Length + 1];
-    
-    for (int j = 0; j <= t.Length; j++) prev[j] = j;
+    // Only two rows of the distance table are needed at a time:
+    // the row for the previous source character and the row being filled in.
+    int[] previousRow = new int[target.Length + 1];
+    int[] currentRow = new int[target.Length + 1];
 
-    for (int i = 1; i <= s.Length; i++)
+    // Turning an empty string into the first N target characters takes N insertions
+    for (int targetIndex = 0; targetIndex <= target.Length; targetIndex++)
+        previousRow[targetIndex] = targetIndex;
+
+    for (int sourceIndex = 1; sourceIndex <= source.Length; sourceIndex++)
     {
-        curr[0] = i;
-        for (int j = 1; j <= t.Length; j++)
+        // Turning the first N source characters into an empty string takes N deletions
+        currentRow[0] = sourceIndex;
+
+        for (int targetIndex = 1; targetIndex <= target.Length; targetIndex++)
         {
-            int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
-            curr[j] = Math.Min(
-                Math.Min(curr[j - 1] + 1, prev[j] + 1), 
-                prev[j - 1] + cost);
+            bool charactersMatch = source[sourceIndex - 1] == target[targetIndex - 1];
+
+            int insertionCost    = currentRow[targetIndex - 1] + 1;
+            int deletionCost     = previousRow[targetIndex] + 1;
+            int substitutionCost = previousRow[targetIndex - 1] + (charactersMatch ? 0 : 1);
+
+            currentRow[targetIndex] = Math.Min(Math.Min(insertionCost, deletionCost), substitutionCost);
         }
-        Array.Copy(curr, prev, curr.Length);
+
+        Array.Copy(currentRow, previousRow, currentRow.Length);
     }
-    return prev[t.Length];
+
+    return previousRow[target.Length];
 }
 
-private static bool IsAtLeastXPercentSimilar(string s, string t, double threshold = 50.0)
+private static bool IsAtLeastXPercentSimilar(string source, string target, double threshold = 50.0)
 {
-    if (string.IsNullOrWhiteSpace(s) || string.IsNullOrWhiteSpace(t)) return false;
+    if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(target)) return false;
 
     // Symmetrically trim punctuation to ensure a fair comparison
-    s = s.TrimEnd('.', '!', '?').Trim();
-    t = t.TrimEnd('.', '!', '?').Trim();
-    
-    if (s == t) return true;
+    source = source.TrimEnd('.', '!', '?').Trim();
+    target = target.TrimEnd('.', '!', '?').Trim();
 
-    int distance = LevenshteinDistance(s, t);
-    int maxLength = Math.Max(s.Length, t.Length);
-    
-    return ((1.0 - ((double)distance / maxLength)) * 100.0) >= threshold;
+    if (source == target) return true;
+
+    int distance = LevenshteinDistance(source, target);
+    int maxLength = Math.Max(source.Length, target.Length);
+    double similarityPercent = (1.0 - (double)distance / maxLength) * 100.0;
+
+    return similarityPercent >= threshold;
 }
 ```
 
